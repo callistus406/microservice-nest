@@ -1,0 +1,104 @@
+version: "3.8"
+
+services:
+  # admin:
+  #   build: ./admin
+  #   container_name: admin_service
+  #   volumes:
+  #     - "./admin/output:/output"
+  #   env_file:
+  #     - ./admin/.env
+  #   ports:
+  #     - "8000:8000"
+  #   networks:
+  #     - microservice_network
+  #   depends_on:
+  #     - postgres_db
+
+  # client:
+  #   build: ./client
+  #   container_name: client_service
+  #   volumes:
+  #     - "./client/output:/output"
+  #   env_file:
+  #     - ./client/.env
+  #   ports:
+  #     - "8001:5001"
+  #   networks:
+  #     - microservice_network
+  #   depends_on:
+  #     - mongo-db
+
+  postgres_db:
+    image: postgres:latest
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservice_network
+
+  mongo-db:
+    image: mongo:latest
+    container_name: mongo-db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - '27018:27017'
+    networks:
+      - microservice_network
+    restart: unless-stopped
+
+  # prisma_studio:
+  #   image: node:18
+  #   container_name: prisma_studio_2
+  #   working_dir: /app
+  #   volumes:
+  #     - .:/app
+  #   entrypoint: [ 'sh', '-c', 'npm install && npx prisma studio' ]
+  #   ports:
+  #     - '5555:5555'
+  #   depends_on:
+  #     - postgres_db
+  #   networks:
+  #     - microservice_network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # RabbitMQ main communication port
+      - "15672:15672" # RabbitMQ management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_logs:/var/log/rabbitmq
+networks:
+  microservice_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  mongo_data:
+    driver: local
+
+  rabbitmq_logs:
+    driver: local
+
+  rabbitmq_data:
+    driver: local
