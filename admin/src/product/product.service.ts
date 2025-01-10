@@ -21,4 +21,15 @@ export class ProductService {
   ) {
     return await this.prisma.product.update({ where: { id }, data });
   }
+
+  public async deleteProduct(id: string) {
+    return await this.prisma.product.delete({ where: { id } });
+  }
+  public async likeProduct(id: string) {
+    return await this.prisma.product.update({
+      where: { id }, data: {
+        likes: {
+      increment:1
+    }} });
+  }
 }
